@@ -3,8 +3,10 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+from dotenv import load_dotenv
 import json
 
+load_dotenv()
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 CHAT_ID = os.environ.get('CHAT_ID')
 
@@ -20,6 +22,7 @@ def github_check():
     repos = soup.find_all("li", class_="repo-list-item")
     path = "./known_github_repos.txt"
     leaks = []
+    i = 0
     if not os.path.exists(path):
         os.mknod(path)
     with open("known_github_repos.txt", "r+") as f:
@@ -36,6 +39,8 @@ def github_check():
                 leaks.append(item_text)
         for leak in leaks:
             send_message(BOT_TOKEN, CHAT_ID, "New potential leak on Github\n" + leak)
+            i = i + 1
+    return i
 
 def codeberg_check():
     URL = "https://codeberg.org/explore/repos?sort=recentupdate&language=&q=42ctf"
@@ -44,6 +49,7 @@ def codeberg_check():
     repos = soup.find_all("div", class_="repo-title")
     path = "./known_codeberg_repos.txt"
     leaks = []
+    i = 0
     if not os.path.exists(path):
         os.mknod(path)
     with open("known_codeberg_repos.txt", "r+") as f:
@@ -60,7 +66,11 @@ def codeberg_check():
                 leaks.append(item_text)
         for leak in leaks:
             send_message(BOT_TOKEN, CHAT_ID, "New potential leak on Codeberg\n" + leak)
+            i = i + 1
+    return i
 
 if __name__ == "__main__":
-    github_check()
-    codeberg_check()
+    count = github_check()
+    count += codeberg_check()
+    if count > 0:
+        print(f"{count} new potential(s) leak(s) found!")
