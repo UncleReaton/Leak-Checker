@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 import json
+from github import Github
 
 load_dotenv()
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
@@ -16,20 +17,17 @@ def send_message(bot_token, chat_id, msg):
     requests.get(url)
 
 def github_check():
-    URL = "https://github.com/search?q=42ctf"
-    page = requests.get(URL)
-    soup = BeautifulSoup(page.content, "html.parser")
-    repos = soup.find_all("li", class_="repo-list-item")
+    g = Github()
     path = "./known_github_repos.txt"
     leaks = []
     i = 0
     if not os.path.exists(path):
         os.mknod(path)
     with open("known_github_repos.txt", "r+") as f:
-        for repo in repos:
-            item = repo.find("a", class_="v-align-middle")
+        for repo in g.search_repositories("42ctf"):
+            item = repo.full_name
             is_new = False
-            item_text = "https://github.com/" + item.text.strip()
+            item_text = "https://github.com/" + item
             for line in f:
                 if line.strip('\n') == item_text:
                     is_new = True
@@ -39,6 +37,7 @@ def github_check():
                 leaks.append(item_text)
         for leak in leaks:
             send_message(BOT_TOKEN, CHAT_ID, "New potential leak on Github\n" + leak)
+            print("New potential leak on Github\n" + leak)
             i = i + 1
     return i
 
